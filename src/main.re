@@ -10,6 +10,11 @@ let openLotteryPage = Page.goto("http://www.luckyseat.com/hamilton-ny/", ());
 
 let wrapInPromise = (a, ()) => Js.Promise.resolve(a);
 
+/*
+ *  Given a function that takes 'a and returns a promise('b), and a default
+ *  value of 'b, returns the result of the function if value is Some or a
+ *  promise that resolves to the default if it's None
+ */
 let wrapInOptionalPromise = (func, default, value) =>
   switch (Js.Nullable.to_opt(value)) {
   | Some(v) => func(v)
@@ -26,6 +31,9 @@ let logString = (response) =>
        }
      );
 
+/*
+ *  Get a reference to the form
+ */
 let getForm = (page) => page |> Page.query("#clickdimensionsForm");
 
 let typeInInput = (text, element) =>
@@ -40,6 +48,9 @@ let populateField = (field, text, form) =>
   |> Js.Promise.then_(wrapInOptionalPromise(typeInInput(text), ()))
   |> Js.Promise.then_(wrapInPromise(form));
 
+/*
+ *  Populate each of the form field values
+ */
 let populateFormValues = (form) =>
   form
   |> populateField("#performance", "2018-02-21")
@@ -48,6 +59,9 @@ let populateFormValues = (form) =>
   |> Js.Promise.then_(populateField("#email", "test"))
   |> Js.Promise.then_((_) => Js.Promise.resolve());
 
+/*
+ *  Open the page, get a reference to the form, and populate the fields
+ */
 let manipulatePage = (page) =>
   page
   |> openLotteryPage
@@ -60,7 +74,7 @@ let manipulatePage = (page) =>
      )
   |> Js.Promise.then_(wrapInOptionalPromise(populateFormValues, ()));
 
-let closeBrowser = (browser, _) => browser |> Browser.close;
+let closeBrowser = (browser, ()) => browser |> Browser.close;
 
 let loadPage = (browser) =>
   browser
@@ -68,5 +82,6 @@ let loadPage = (browser) =>
   |> Js.Promise.then_(manipulatePage)
   |> Js.Promise.then_(closeBrowser(browser));
 
+/* Start everything */
 Puppeteer.launch(~options=Launcher.makeLaunchOptions(~headless=false, ()), ())
 |> Js.Promise.then_((browser) => loadPage(browser));
