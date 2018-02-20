@@ -8,14 +8,14 @@ open BsPuppeteer;
 
 let openLotteryPage = Page.goto("http://www.luckyseat.com/hamilton-ny/", ());
 
-let wrapInPromise = (a, ()) => Js.Promise.resolve(a);
+let resolveWith = (a, ()) => Js.Promise.resolve(a);
 
 /*
  *  Given a function that takes 'a and returns a promise('b), and a default
  *  value of 'b, returns the result of the function if value is Some or a
  *  promise that resolves to the default if it's None
  */
-let wrapInOptionalPromise = (func, default, value) =>
+let maybeResolve = (func, default, value) =>
   switch (Js.Nullable.to_opt(value)) {
   | Some(v) => func(v)
   | None => Js.Promise.resolve(default)
@@ -39,14 +39,14 @@ let getForm = (page) => page |> Page.query("#clickdimensionsForm");
 let typeInInput = (text, element) =>
   element
   |> ElementHandle.type_(text, ())
-  |> Js.Promise.then_(wrapInPromise(element))
+  |> Js.Promise.then_(resolveWith(element))
   |> Js.Promise.then_(ElementHandle.dispose);
 
 let populateField = (field, text, form) =>
   form
   |> ElementHandle.query(field)
-  |> Js.Promise.then_(wrapInOptionalPromise(typeInInput(text), ()))
-  |> Js.Promise.then_(wrapInPromise(form));
+  |> Js.Promise.then_(maybeResolve(typeInInput(text), ()))
+  |> Js.Promise.then_(resolveWith(form));
 
 /*
  *  Populate each of the form field values
@@ -72,7 +72,7 @@ let manipulatePage = (page) =>
          maybeForm
        }
      )
-  |> Js.Promise.then_(wrapInOptionalPromise(populateFormValues, ()));
+  |> Js.Promise.then_(maybeResolve(populateFormValues, ()));
 
 let closeBrowser = (browser, ()) => browser |> Browser.close;
 
