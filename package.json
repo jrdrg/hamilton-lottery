@@ -1,0 +1,22 @@
+{
+  "name": "hamilton-lottery",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "bsb -make-world",
+    "start": "bsb -make-world -w",
+    "clean": "bsb -clean-world",
+    "main": "node ./src/main.bs.js"
+  },
+  "keywords": [
+    "BuckleScript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "bs-platform": "^2.2.0"
+  },
+  "dependencies": {
+    "bs-fetch": "^0.2.1",
+    "bs-puppeteer": "https://github.com/zploskey/bs-puppeteer.git"
+  }
+}
