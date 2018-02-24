@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "bs-fetch": "^0.2.1",
-    "bs-puppeteer": "https://github.com/zploskey/bs-puppeteer.git"
+    "bs-puppeteer": "https://github.com/zploskey/bs-puppeteer.git",
+    "dotenv": "^5.0.0"
   }
 }
