@@ -10,7 +10,7 @@ open Js.Promise;
 
 module Dotenv = {
   [@bs.module "dotenv"] external config : unit => unit = "";
-  [@bs.val] external env : Js.Dict.t(string) = "process.env";
+  [@bs.val] [@bs.scope "process"] external env : Js.Dict.t(string) = "";
   let get = Js.Dict.get(env);
 };
 
@@ -21,8 +21,6 @@ let orDefault = (default, str) =>
   | Some(value) => value
   | None => default
   };
-
-Js.log(Dotenv.get("firstname") |> orDefault("???"));
 
 let openLotteryPage = Page.goto("http://www.luckyseat.com/hamilton-ny/", ());
 
@@ -52,7 +50,7 @@ let logString = (response) =>
 /*
  *  Get a reference to the form
  */
-let getForm = (page) => page |> Page.query("#clickdimensionsForm");
+let getForm = (page) => page |> Page.query("form");
 
 let typeInInput = (text, element) =>
   element
@@ -79,9 +77,9 @@ let clickElement = (field, form) =>
   |> then_(resolveWith(form));
 
 /*
- *  Populate each of the form field values
+ *  Populate each of the form field values (this was the old form fields)
  */
-let populateFormValues = (form) =>
+let oldPopulateFormValues = (form) =>
   form
   |> populateField("#firstname", Dotenv.get("firstname") |> orDefault(""))
   |> then_(populateField("#lastname", Dotenv.get("lastname") |> orDefault("")))
@@ -94,24 +92,46 @@ let populateFormValues = (form) =>
   |> then_((_) => resolve());
 
 /*
+ *  Populate each of the form field values (new form, with no captcha)
+ */
+let populateFormValues = (form) =>
+  form
+  |> populateField("#Q3_1", Dotenv.get("firstname") |> orDefault(""))
+  |> then_(populateField("#Q4_1", Dotenv.get("lastname") |> orDefault("")))
+  |> then_(populateField("#Q5_1", Dotenv.get("email") |> orDefault("")))
+  |> then_(populateField("#Q6_1", Dotenv.get("zipcode") |> orDefault("")))
+  |> then_(populateField("#Q11_1", Dotenv.get("age") |> orDefault("")))
+  |> then_(clickElement("label[for=Q9_1"))
+  |> then_(clickElement("label[for=Q10_2]"))
+  |> then_(clickElement("input[type=submit]"))
+  |> then_((_) => resolve());
+
+/*
  *  Open the page, get a reference to the form, and populate the fields
  */
 let manipulatePage = (page) =>
   page
   |> openLotteryPage
   |> then_(
-       (response) => {
-         logString(response) |> ignore;
+       (_response) =>
+         /* logString(response) |> ignore; */
          getForm(page)
-       }
      )
-  |> then_(maybeResolve(populateFormValues, ()));
+  |> then_(
+       (maybeForm) =>
+         switch (Js.Nullable.to_opt(maybeForm)) {
+         | Some(form) => populateFormValues(form)
+         | None =>
+           Js.log("-- No form was found --");
+           resolve()
+         }
+     );
 
 let closeBrowser = (browser, ()) => browser |> Browser.close;
 
-let loadPage = (browser) => browser |> Browser.newPage |> then_(manipulatePage);
+let loadPage = (browser) =>
+  browser |> Browser.newPage |> then_(manipulatePage) |> then_(closeBrowser(browser));
 
-/* |> then_(closeBrowser(browser)); */
 /* Start everything */
 Puppeteer.launch(~options=Launcher.makeLaunchOptions(~headless=false, ()), ())
 |> then_((browser) => loadPage(browser));
